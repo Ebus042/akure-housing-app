@@ -1,98 +1,115 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { useEffect, useState } from "react";
+import { View, Text, FlatList, Image, Pressable } from "react-native";
+import { Picker } from "@react-native-picker/picker";
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const [properties, setProperties] = useState<any[]>([]);
+  const [location, setLocation] = useState("");
+  const [type, setType] = useState("");
+  const [price, setPrice] = useState("");
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  useEffect(() => {
+    if (!location || !type || !price) return;
+
+    const url = `http://172.20.10.4:5000/api/properties?location=${location}&type=${type}&price=${price}`;
+
+    fetch(url)
+      .then((res) => res.json())
+      .then((data) => setProperties(data))
+      .catch((err) => console.log(err));
+  }, [location, type, price]);
+
+  return (
+    <View style={{ padding: 20 }}>
+      <Text
+        style={{
+          fontSize: 36,
+          fontWeight: "bold",
+          marginTop: 70,
+          marginBottom: 20,
+        }}
+      >
+        Houses in Akure
+      </Text>
+      <View style={{ marginBottom: 20 }}>
+        {/* Location */}
+        <Picker
+          selectedValue={location}
+          onValueChange={(itemValue) => setLocation(itemValue)}
+        >
+          <Picker.Item label="Select Location" value="" />
+          <Picker.Item label="Alagbaka" value="Alagbaka" />
+          <Picker.Item label="Ijapo Estate" value="Ijapo Estate" />
+          <Picker.Item label="Oba Ile" value="Oba Ile" />
+        </Picker>
+
+        {/* House Type */}
+        <Picker
+          selectedValue={type}
+          onValueChange={(itemValue) => setType(itemValue)}
+        >
+          <Picker.Item label="Select Type" value="" />
+          <Picker.Item label="2 Bedroom" value="2bedroom" />
+          <Picker.Item label="3 Bedroom" value="3bedroom" />
+        </Picker>
+
+        {/* Price Range */}
+        <Picker
+          selectedValue={price}
+          onValueChange={(itemValue) => setPrice(itemValue)}
+        >
+          <Picker.Item label="Select Price Range" value="" />
+          <Picker.Item label="₦500k - ₦1m" value="500000-1000000" />
+          <Picker.Item label="₦1m - ₦2m" value="1000000-2000000" />
+        </Picker>
+
+        <Pressable
+          onPress={() => {
+            if (!location || !type || !price) return;
+
+            const url = `http://172.20.10.4:5000/api/properties?location=${location}&type=${type}&price=${price}`;
+
+            fetch(url)
+              .then((res) => res.json())
+              .then((data) => setProperties(data))
+              .catch((err) => console.log(err));
+          }}
+          style={{
+            backgroundColor: "#065f46",
+            padding: 15,
+            borderRadius: 8,
+            marginTop: 10,
+          }}
+        >
+          <Text
+            style={{ color: "white", textAlign: "center", fontWeight: "bold" }}
+          >
+            Search
+          </Text>
+        </Pressable>
+      </View>
+
+      <FlatList
+        data={properties}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          console.log(item.images[0]),
+          (
+            <View style={{ marginTop: 15 }}>
+              <Image
+                source={{ uri: item.images[0] }}
+                style={{ width: "100%", height: 200, borderRadius: 10 }}
+              />
+
+              <Text style={{ fontSize: 18, fontWeight: "bold", marginTop: 5 }}>
+                {item.title}
+              </Text>
+
+              <Text>₦{item.price.toLocaleString()}</Text>
+            </View>
+          )
+        )}
+      />
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
